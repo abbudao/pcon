@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
     MPI_Type_commit(&column_type);
     MPI_Bcast(&order,1,MPI_INT,MPI_ROOT,inter_comm);
     MPI_Scatter(sendcounts,1,MPI_INT,NULL,0,MPI_INT,MPI_ROOT,inter_comm);
+    /*Scatterv have errors */
     MPI_Scatterv(AB,sendcounts,displs,column_type,NULL,0,MPI_INT,MPI_ROOT,inter_comm);
   }
 
