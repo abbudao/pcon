@@ -32,9 +32,11 @@ int main(int argc, char *argv[])
     cols[i] = (float *) malloc(sizeof(float)*col_size);
   }
   multipliers_array=(float*) malloc(sizeof(float)*col_size);
+  printf("Alocado com sucesso processo %d\n",my_rank);
   /*Receive array of columns from Master */
   MPI_Type_contiguous(col_size,MPI_FLOAT,&column_type);
   MPI_Type_commit(&column_type);
+  printf("Commitado com sucesso processo %d\n",my_rank);
   MPI_Scatterv(NULL,NULL,NULL,MPI_INT,cols,col_count,column_type,0,inter_comm);
   printf("Scaberabou");
   /*Iterates over all rows of the matrix */
