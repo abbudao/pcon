@@ -11,3 +11,13 @@ int countErrors(int *array_of_errcodes, int size){
   }
 return error_count;
 }
+void printMatrix(float **M, int lines, int cols){
+  int i,j;
+  for(i=0;i<cols;i++){
+    printf("\nColuna %d :\n",i);
+    for(j=0;j<lines;j++){
+      printf("[%f]\n",M[i][j]);
+    }
+    printf("\n");
+  }
+}

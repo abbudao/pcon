@@ -4,10 +4,10 @@
 #include "master_func.c"
 #define SUCCESS 1
 #define ERROR 0
-#define NUMBER_OF_CLUSTER_NODES 13
+#define NUMBER_OF_CLUSTER_NODES 3
 int main(int argc, char *argv[])
 {
-  char program_name[]="slave";
+  char program_name[]="./slave";
   int i,j,my_rank,num_proc,num_slaves;
   int divis,r;
   int order=10;
@@ -23,28 +23,30 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
   if(my_rank==0){
     AB= (float **) malloc((order+1)*(sizeof(float*) ));
-    for(i=0;i<order;i++){
+    for(i = 0; i < order+1; i++){
       AB[i]=(float *) malloc((order) * (sizeof(float)));
     }
-    if(order+1>NUMBER_OF_CLUSTER_NODES){
-      num_slaves=NUMBER_OF_CLUSTER_NODES;
+    if(order + 1> NUMBER_OF_CLUSTER_NODES){
+      num_slaves = NUMBER_OF_CLUSTER_NODES;
     }
-    else{
-      num_slaves=order+1;
+    else {
+      num_slaves = order + 1;
     }
     array_of_errcodes = (int*) malloc((num_slaves)*sizeof(int));
     MPI_Comm_spawn(program_name, MPI_ARGV_NULL, num_slaves, MPI_INFO_NULL,0, MPI_COMM_WORLD, &inter_comm, array_of_errcodes);
-    num_slaves=num_slaves-countErrors(array_of_errcodes,num_slaves);
-    for(i=0;i<order;i++){
-      for(j=0;j<order+1;j++){
+    num_slaves = num_slaves - countErrors(array_of_errcodes,num_slaves);
+    printf("num_slaves = %d\n", num_slaves);
+    for(i = 0; i < order + 1; i++){
+      for(j = 0; j < order; j++){
         AB[i][j] = i+j;
       }
     }
+    printMatrix(AB,order,order+1);
     sendcounts= (int*) malloc(sizeof(int)*num_slaves);
     displs= (int*) malloc(sizeof(int)*num_slaves);
-    divis=order+1/num_slaves;
+    divis=(order+1)/num_slaves;
     r=(order+1)%num_slaves;
-    for(i=0;i<order;i++){
+    for(i=0;i<num_slaves;i++){
       if(i<r){
         sendcounts[i]=divis+1;
       }
@@ -52,19 +54,30 @@ int main(int argc, char *argv[])
         sendcounts[i]=divis;
       }
     }
-    displs[0]=0;
-    for(i=1;i<order;i++){
-      displs[i]=sendcounts[i]+displs[i-1];
+    for(i=0;i<num_slaves;i++){
+      printf("Sendcounts[%d]: %d \n",i,sendcounts[i]);
     }
-    MPI_Type_vector(1,order,order+1,MPI_FLOAT,&column_type);
+    displs[0]=0;
+    printf("displs[0]: %d \n",displs[0]);
+    for(i=1;i<num_slaves;i++){
+      displs[i]=sendcounts[i]+displs[i-1];
+      printf("displs[%d]: %d \n",i,displs[i]);
+    }
+    MPI_Type_contiguous(order,MPI_FLOAT,&column_type);
+    /* MPI_Type_vector(1,order+1,order,MPI_FLOAT,&column_type); */
     MPI_Type_commit(&column_type);
+    printf("commitou \n" );
     MPI_Bcast(&order,1,MPI_INT,MPI_ROOT,inter_comm);
-    MPI_Scatter(sendcounts,1,MPI_INT,NULL,0,MPI_INT,MPI_ROOT,inter_comm);
+    printf("Broadcastou\n" );
+    MPI_Scatter(sendcounts,1,MPI_INT,NULL,1,MPI_INT,MPI_ROOT,inter_comm);
+    printf("Scattou\n" );
     /*Scatterv have errors */
-    MPI_Scatterv(AB,sendcounts,displs,column_type,NULL,0,MPI_INT,MPI_ROOT,inter_comm);
+    MPI_Scatterv(AB,sendcounts,displs,column_type,NULL,1,MPI_INT,MPI_ROOT,inter_comm);
+    MPI_Type_free(&column_type);
+    MPI_Finalize();
+    printf("Scattervzou");
+  /* MPI_Finalize(); */
   }
-
-
-  MPI_Finalize();
   return 0;
 }
+
