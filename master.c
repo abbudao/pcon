@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
-#include "master_func.c"
+#include "master_func.c" 
 #define SUCCESS 1
 #define ERROR 0
 #define NUMBER_OF_CLUSTER_NODES 3
