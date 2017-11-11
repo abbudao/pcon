@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     displs[0]=0;
     printf("displs[0]: %d \n",displs[0]);
     for(i=1;i<num_slaves;i++){
-      displs[i]=sendcounts[i]+displs[i-1];
+      displs[i]=sendcounts[i]+displs[i-1]+1;
       printf("displs[%d]: %d \n",i,displs[i]);
     }
     MPI_Type_contiguous(order,MPI_FLOAT,&column_type);
@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
     MPI_Type_free(&column_type);
     MPI_Finalize();
     printf("Scattervzou");
-  /* MPI_Finalize(); */
   }
   return 0;
 }
