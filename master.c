@@ -16,14 +16,14 @@ int main(int argc, char *argv[])
   /*AB is an array of columns representing the matrix */
   float **AB; 
   int *array_of_errcodes; 
-  MPI_Datatype column_type;
+  MPI_Datatype column_type, col;
   MPI_Comm  inter_comm;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
   if(my_rank==0){
     AB= (float **) malloc((order+1)*(sizeof(float*) ));
-    for(i = 0; i < order+1; i++){
+    for(i = 0; i < order + 1; i++){
       AB[i]=(float *) malloc((order) * (sizeof(float)));
     }
     if(order + 1> NUMBER_OF_CLUSTER_NODES){
@@ -60,19 +60,22 @@ int main(int argc, char *argv[])
     displs[0]=0;
     printf("displs[0]: %d \n",displs[0]);
     for(i=1;i<num_slaves;i++){
-      displs[i]=sendcounts[i-1]+displs[i-1]+1;
+      displs[i]=sendcounts[i]+displs[i-1];
       printf("displs[%d]: %d \n",i,displs[i]);
     }
-    MPI_Type_contiguous(order,MPI_FLOAT,&column_type);
-    /* MPI_Type_vector(1,order+1,order,MPI_FLOAT,&column_type); */
+
+    MPI_Type_vector(num_slaves-1,1,num_slaves,MPI_FLOAT,&col);
+    MPI_Type_commit(&col);
+    MPI_Type_create_resized(col, 0, 1*sizeof(float), &column_type);
     MPI_Type_commit(&column_type);
-    printf("commitou \n" );
+    printf("Commit realizado");
     MPI_Bcast(&order,1,MPI_INT,MPI_ROOT,inter_comm);
     printf("Broadcastou\n" );
     MPI_Scatter(sendcounts,1,MPI_INT,NULL,1,MPI_INT,MPI_ROOT,inter_comm);
-    printf("Scattou\n" );
+    printf("Scatou\n" );
     /*Scatterv have errors */
-    MPI_Scatterv(AB,sendcounts,displs,column_type,NULL,1,MPI_INT,MPI_ROOT,inter_comm);
+    MPI_Scatterv(AB,sendcounts,displs,column_type,NULL,divis,MPI_INT,MPI_ROOT,inter_comm);
+    MPI_Type_free(&col);
     MPI_Type_free(&column_type);
     MPI_Finalize();
     printf("Scattervzou");
